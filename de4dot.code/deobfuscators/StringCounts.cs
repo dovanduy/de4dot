@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright (C) 2011-2014 de4dot@gmail.com
+    Copyright (C) 2011-2015 de4dot@gmail.com
 
     This file is part of de4dot.
 
@@ -23,7 +23,7 @@ using dnlib.DotNet;
 using dnlib.DotNet.Emit;
 
 namespace de4dot.code.deobfuscators {
-	class StringCounts {
+	public class StringCounts {
 		Dictionary<string, int> strings = new Dictionary<string, int>(StringComparer.Ordinal);
 
 		public IEnumerable<string> Strings {
@@ -65,7 +65,7 @@ namespace de4dot.code.deobfuscators {
 		}
 	}
 
-	class FieldTypes : StringCounts {
+	public class FieldTypes : StringCounts {
 		public FieldTypes(TypeDef type) {
 			Initialize(type.Fields);
 		}
@@ -85,7 +85,7 @@ namespace de4dot.code.deobfuscators {
 		}
 	}
 
-	class LocalTypes : StringCounts {
+	public class LocalTypes : StringCounts {
 		public LocalTypes(MethodDef method) {
 			if (method != null && method.Body != null)
 				Initialize(method.Body.Variables);

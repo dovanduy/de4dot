@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright (C) 2011-2014 de4dot@gmail.com
+    Copyright (C) 2011-2015 de4dot@gmail.com
 
     This file is part of de4dot.
 
@@ -23,7 +23,7 @@ using dnlib.IO;
 
 namespace de4dot.code.deobfuscators {
 	[Serializable]
-	class InvalidMethodBody : Exception {
+	public class InvalidMethodBody : Exception {
 		public InvalidMethodBody() {
 		}
 
@@ -32,14 +32,14 @@ namespace de4dot.code.deobfuscators {
 		}
 	}
 
-	class MethodBodyHeader {
+	public class MethodBodyHeader {
 		public ushort flags;
 		public ushort maxStack;
 		public uint codeSize;
 		public uint localVarSigTok;
 	}
 
-	static class MethodBodyParser {
+	public static class MethodBodyParser {
 		public static MethodBodyHeader ParseMethodBody(IBinaryReader reader, out byte[] code, out byte[] extraSections) {
 			try {
 				return ParseMethodBody2(reader, out code, out extraSections);

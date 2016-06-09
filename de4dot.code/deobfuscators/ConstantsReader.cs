@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright (C) 2011-2014 de4dot@gmail.com
+    Copyright (C) 2011-2015 de4dot@gmail.com
 
     This file is part of de4dot.
 
@@ -23,7 +23,7 @@ using dnlib.DotNet.Emit;
 using de4dot.blocks;
 
 namespace de4dot.code.deobfuscators {
-	class ConstantsReader {
+	public class ConstantsReader {
 		protected IInstructions instructions;
 		protected IList<Local> locals;
 		protected Dictionary<Local, int> localsValuesInt32 = new Dictionary<Local, int>();

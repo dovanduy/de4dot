@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright (C) 2011-2014 de4dot@gmail.com
+    Copyright (C) 2011-2015 de4dot@gmail.com
 
     This file is part of de4dot.
 
@@ -21,7 +21,7 @@ using System.Collections.Generic;
 using dnlib.DotNet;
 
 namespace de4dot.code.renamer.asmmodules {
-	class MPropertyDef : Ref {
+	public class MPropertyDef : Ref {
 		public MMethodDef GetMethod { get; set; }
 		public MMethodDef SetMethod { get; set; }
 

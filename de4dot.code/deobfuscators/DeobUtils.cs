@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright (C) 2011-2014 de4dot@gmail.com
+    Copyright (C) 2011-2015 de4dot@gmail.com
 
     This file is part of de4dot.
 
@@ -28,7 +28,7 @@ using ICSharpCode.SharpZipLib.Zip.Compression;
 using de4dot.blocks;
 
 namespace de4dot.code.deobfuscators {
-	static class DeobUtils {
+	public static class DeobUtils {
 		public static void DecryptAndAddResources(ModuleDef module, string encryptedName, Func<byte[]> decryptResource) {
 			Logger.v("Decrypting resources, name: {0}", Utils.ToCsharpString(encryptedName));
 			var decryptedResourceData = decryptResource();

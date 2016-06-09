@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright (C) 2011-2014 de4dot@gmail.com
+    Copyright (C) 2011-2015 de4dot@gmail.com
 
     This file is part of de4dot.
 
@@ -27,7 +27,7 @@ namespace de4dot.code.deobfuscators {
 	// Restore the type of all fields / parameters that have had their type turned into object.
 	// This thing requires a lot more code than I have time to do now (similar to symbol renaming)
 	// so it will be a basic implementation only.
-	abstract class TypesRestorerBase {
+	public abstract class TypesRestorerBase {
 		ModuleDef module;
 		List<MethodDef> allMethods;
 		Dictionary<Parameter, TypeInfo<Parameter>> argInfos = new Dictionary<Parameter, TypeInfo<Parameter>>();
@@ -639,7 +639,7 @@ namespace de4dot.code.deobfuscators {
 		}
 	}
 
-	class TypesRestorer : TypesRestorerBase {
+	public class TypesRestorer : TypesRestorerBase {
 		public TypesRestorer(ModuleDef module)
 			: base(module) {
 		}

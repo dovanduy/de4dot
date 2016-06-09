@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright (C) 2011-2014 de4dot@gmail.com
+    Copyright (C) 2011-2015 de4dot@gmail.com
 
     This file is part of de4dot.
 
@@ -22,7 +22,7 @@ using dnlib.DotNet.MD;
 using dnlib.DotNet.Writer;
 
 namespace de4dot.code {
-	class PrintNewTokens : IModuleWriterListener {
+	public class PrintNewTokens : IModuleWriterListener {
 		readonly ModuleDef module;
 		readonly IModuleWriterListener otherListener;
 

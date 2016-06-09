@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright (C) 2011-2014 de4dot@gmail.com
+    Copyright (C) 2011-2015 de4dot@gmail.com
 
     This file is part of de4dot.
 
@@ -24,7 +24,7 @@ using System.Threading;
 using AssemblyData;
 
 namespace de4dot.code.AssemblyClient {
-	sealed class AssemblyClient : IAssemblyClient {
+	public sealed class AssemblyClient : IAssemblyClient {
 		const int WAIT_TIME_BEFORE_CONNECTING = 1000;
 		const int MAX_CONNECT_WAIT_TIME_MS = 2000;
 		IAssemblyServerLoader loader;

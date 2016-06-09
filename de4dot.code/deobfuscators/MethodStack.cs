@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright (C) 2011-2014 de4dot@gmail.com
+    Copyright (C) 2011-2015 de4dot@gmail.com
 
     This file is part of de4dot.
 
@@ -23,7 +23,7 @@ using dnlib.DotNet.Emit;
 using de4dot.blocks;
 
 namespace de4dot.code.deobfuscators {
-	class PushedArgs {
+	public class PushedArgs {
 		List<Instruction> args;
 		int nextIndex;
 
@@ -74,7 +74,7 @@ namespace de4dot.code.deobfuscators {
 		}
 	}
 
-	static class MethodStack {
+	public static class MethodStack {
 		// May not return all args. The args are returned in reverse order.
 		public static PushedArgs GetPushedArgInstructions(IList<Instruction> instructions, int index) {
 			try {

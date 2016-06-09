@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright (C) 2011-2014 de4dot@gmail.com
+    Copyright (C) 2011-2015 de4dot@gmail.com
 
     This file is part of de4dot.
 
@@ -23,7 +23,7 @@ using dnlib.DotNet;
 using de4dot.blocks;
 
 namespace de4dot.code.renamer.asmmodules {
-	class Modules : IResolver {
+	public class Modules : IResolver {
 		bool initializeCalled = false;
 		IDeobfuscatorContext deobfuscatorContext;
 		List<Module> modules = new List<Module>();

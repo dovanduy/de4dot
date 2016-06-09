@@ -1,4 +1,4 @@
-﻿/*
+/*
     Copyright (C) 2011-2014 de4dot@gmail.com
 
     This file is part of de4dot.
@@ -17,26 +17,17 @@
     along with de4dot.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-namespace de4dot.code.resources {
-	class UserResourceType {
-		readonly string name;
-		readonly ResourceTypeCode code;
+using System.Reflection;
+using System.Runtime.InteropServices;
 
-		public string Name {
-			get { return name; }
-		}
-
-		public ResourceTypeCode Code {
-			get { return code; }
-		}
-
-		public UserResourceType(string name, ResourceTypeCode code) {
-			this.name = name;
-			this.code = code;
-		}
-
-		public override string ToString() {
-			return string.Format("{0:X2} {1}", (int)code, name);
-		}
-	}
-}
+[assembly: AssemblyTitle("deobfuscator.Template")]
+[assembly: AssemblyDescription("de4dot Deobfuscator Template Module")]
+[assembly: AssemblyConfiguration("")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("deobfuscator.Template")]
+[assembly: AssemblyCopyright("Copyright (C) 2011-2014 de4dot@gmail.com")]
+[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCulture("")]
+[assembly: ComVisible(false)]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]

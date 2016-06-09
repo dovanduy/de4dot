@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright (C) 2011-2014 de4dot@gmail.com
+    Copyright (C) 2011-2015 de4dot@gmail.com
 
     This file is part of de4dot.
 
@@ -46,8 +46,11 @@ namespace de4dot.code.deobfuscators.Eazfuscator_NET {
 		StreamHelperType streamHelperType;
 		EfConstantsReader stringMethodConsts;
 		bool isV32OrLater;
+		bool isV50OrLater;
+		bool isV51OrLater;
 		int? validStringDecrypterValue;
 		DynamicDynocodeIterator dynocode;
+		MethodDef realMethod;
 
 		class StreamHelperType {
 			public TypeDef type;
@@ -112,6 +115,18 @@ namespace de4dot.code.deobfuscators.Eazfuscator_NET {
 			get { return stringType != null; }
 		}
 
+		/// <summary>
+		/// In 5.0, the actual string decrypter method doesn't do much, calls a helper method which
+		/// does most of the work (and is mostly the same as the stringMethod from 4.9 and below).
+		/// </summary>
+		public bool HasRealMethod {
+			get { return realMethod != null; }
+		}
+
+		public MethodDef RealMethod {
+			get { return (realMethod != null ? realMethod : stringMethod); }
+		}
+
 		public StringDecrypter(ModuleDefMD module, DecrypterType decrypterType) {
 			this.module = module;
 			this.decrypterType = decrypterType;
@@ -135,8 +150,21 @@ namespace de4dot.code.deobfuscators.Eazfuscator_NET {
 					if (!CheckDecrypterMethod(method))
 						continue;
 
+					// 5.0
+					if (CheckIfHelperMethod(method)) {
+						stringMethod = method;
+						realMethod = GetRealDecrypterMethod(method);
+						isV50OrLater = true;
+						foreach (var inst in stringMethod.Body.Instructions) {
+							if (inst.OpCode.Code == Code.Cgt_Un) {
+								isV51OrLater = true;
+								break;
+							}
+						}
+					}
+					else stringMethod = method;
+
 					stringType = type;
-					stringMethod = method;
 					isV32OrLater = CheckIfV32OrLater(stringType);
 					return;
 				}
@@ -211,7 +239,31 @@ namespace de4dot.code.deobfuscators.Eazfuscator_NET {
 				if (calledMethod != null && calledMethod.FullName == "System.IO.Stream System.Reflection.Assembly::GetManifestResourceStream(System.String)")
 					return true;
 			}
+
 			return false;
+		}
+
+		/// <remarks>5.0</remarks>
+		static bool CheckIfHelperMethod(MethodDef method) {
+			// Helper method will be `private static`, instead of `internal static`
+			return method.DeclaringType.Methods.Count == 4 && !method.IsAssembly;
+		}
+
+		/// <summary>
+		/// Get the real decrypter method from a found helper method.
+		/// </summary>
+		/// <remarks>5.0</remarks>
+		static MethodDef GetRealDecrypterMethod(MethodDef helper) {
+			var methods = helper.DeclaringType.Methods;
+			var sigComparer = new SigComparer();
+			foreach (var method in methods) {
+				if (method.MDToken != helper.MDToken &&
+					method.IsAssembly &&
+					sigComparer.Equals(method.MethodSig, helper.MethodSig))
+					return method;
+			}
+
+			return null;
 		}
 
 		public void Initialize(ISimpleDeobfuscator simpleDeobfuscator) {
@@ -250,9 +302,14 @@ namespace de4dot.code.deobfuscators.Eazfuscator_NET {
 				return false;
 			if (checkMinus2 && !FindInt5())
 				return false;
-			dataDecrypterType = FindDataDecrypterType(stringMethod);
-			if (dataDecrypterType == null)
-				return false;
+
+			// The method body of the data decrypter method has been moved into
+			// the string decrypter helper method in 5.0
+			if (!isV50OrLater) {
+				dataDecrypterType = FindDataDecrypterType(stringMethod);
+				if (dataDecrypterType == null)
+					return false;
+			}
 
 			if (isV32OrLater) {
 				bool initializedAll;
@@ -268,9 +325,21 @@ namespace de4dot.code.deobfuscators.Eazfuscator_NET {
 				if (decrypterType.Detected && !decrypterType.Initialize())
 					return false;
 
+				if (!isV50OrLater) {
+					decrypterType.ShiftConsts = new List<int> { 24, 16, 8, 0, 16, 8, 0, 24 };
+				}
+				else {
+					List<int> shiftConsts;
+					if (!FindShiftInts(decrypterType.Int64Method, out shiftConsts))
+						return false;
+
+					decrypterType.ShiftConsts = shiftConsts;
+				}
+
 				if (!FindInts(index))
 					return false;
 			}
+
 
 			InitializeFlags();
 			Initialize();
@@ -371,7 +440,14 @@ namespace de4dot.code.deobfuscators.Eazfuscator_NET {
 			return -1;
 		}
 
-		static Local GetFlagsLocal(MethodDef method, int index) {
+		Local GetFlagsLocal(MethodDef method, int index) {
+			if (isV51OrLater)
+				return GetFlagsLocalNew(method, index);
+			return GetFlagsLocalOld(method, index);
+		}
+
+		// <= 5.0 
+		static Local GetFlagsLocalOld(MethodDef method, int index) {
 			var instrs = method.Body.Instructions;
 			if (index + 5 >= instrs.Count)
 				return null;
@@ -384,6 +460,24 @@ namespace de4dot.code.deobfuscators.Eazfuscator_NET {
 			if (instrs[index++].OpCode.Code != Code.Ldc_I4_0)
 				return null;
 			if (instrs[index++].OpCode.Code != Code.Ceq)
+				return null;
+			var stloc = instrs[index++];
+			if (!stloc.IsStloc())
+				return null;
+			return stloc.GetLocal(method.Body.Variables);
+		}
+
+		// 5.1+
+		// Uses different OpCodes
+		static Local GetFlagsLocalNew(MethodDef method, int index) {
+			var instrs = method.Body.Instructions;
+			if (index + 5 >= instrs.Count)
+				return null;
+			if (instrs[index++].OpCode.Code != Code.And)
+				return null;
+			if (instrs[index++].OpCode.Code != Code.Ldc_I4_0)
+				return null;
+			if (instrs[index++].OpCode.Code != Code.Cgt_Un)
 				return null;
 			var stloc = instrs[index++];
 			if (!stloc.IsStloc())
@@ -542,6 +636,51 @@ namespace de4dot.code.deobfuscators.Eazfuscator_NET {
 			return DotNetUtils.GetResource(module, sb.ToString()) as EmbeddedResource;
 		}
 
+		bool FindShiftInts(MethodDef method, out List<int> bytes) {
+			var instrs = method.Body.Instructions;
+			var constantsReader = new EfConstantsReader(method);
+			bytes = new List<int>(8);
+
+			for (int i = 0; i < instrs.Count - 4; i++) {
+				if (bytes.Count >= 8)
+					return true;
+
+				var ldloc1 = instrs[i];
+				if (ldloc1.OpCode.Code != Code.Ldloc_1)
+					continue;
+
+				var ldlocs = instrs[i + 1];
+				if (ldlocs.OpCode.Code != Code.Ldloc_S)
+					continue;
+
+				var maybe = instrs[i + 2];
+				if (maybe.OpCode.Code == Code.Conv_U1) {
+					var callvirt = instrs[i + 3];
+					if (callvirt.OpCode.Code != Code.Callvirt)
+						return false;
+
+					bytes.Add(0);
+					continue;
+				}
+				var shr = instrs[i + 3];
+				if (shr.OpCode.Code != Code.Shr)
+					return false;
+
+				var convu1 = instrs[i + 4];
+				if (convu1.OpCode.Code != Code.Conv_U1)
+					return false;
+
+				int constant;
+				int index = i + 2;
+				if (!constantsReader.GetInt32(ref index, out constant))
+					return false;
+
+				bytes.Add(constant);
+			}
+
+			return false;
+		}
+
 		static MethodDef FindInt64Method(MethodDef method) {
 			foreach (var instr in method.Body.Instructions) {
 				if (instr.OpCode.Code != Code.Call)
@@ -648,7 +787,7 @@ namespace de4dot.code.deobfuscators.Eazfuscator_NET {
 					break;
 				}
 			}
-done: ;
+done:
 
 			foreach (var val in fields.Values) {
 				if (val == null)
@@ -661,6 +800,13 @@ done: ;
 		}
 
 		bool EmulateDynocode(InstructionEmulator emu, ref int index) {
+			if (isV51OrLater)
+				return EmulateDynocodeNew(emu, ref index);
+			return EmulateDynocodeOld(emu, ref index);
+		}
+
+		// <= 5.0
+		bool EmulateDynocodeOld(InstructionEmulator emu, ref int index) {
 			var instrs = stringMethod.Body.Instructions;
 			var instr = instrs[index];
 
@@ -672,6 +818,68 @@ done: ;
 				return false;
 			var ldloc = instrs[index + 3];
 			var stfld = instrs[index + 4];
+			if (!ldloc.IsLdloc() || stfld.OpCode.Code != Code.Stfld)
+				return false;
+			var enumerableField = stfld.Operand as FieldDef;
+			if (enumerableField == null)
+				return false;
+
+			var initValue = emu.GetLocal(ldloc.GetLocal(stringMethod.Body.Variables)) as Int32Value;
+			if (initValue == null || !initValue.AllBitsValid())
+				return false;
+
+			int leaveIndex = FindLeave(instrs, index);
+			if (leaveIndex < 0)
+				return false;
+			var afterLoop = instrs[leaveIndex].Operand as Instruction;
+			if (afterLoop == null)
+				return false;
+			int newIndex = instrs.IndexOf(afterLoop);
+			var loopLocal = GetDCLoopLocal(index, newIndex);
+			if (loopLocal == null)
+				return false;
+			var initValue2 = emu.GetLocal(loopLocal) as Int32Value;
+			if (initValue2 == null || !initValue2.AllBitsValid())
+				return false;
+
+			int loopStart = GetIndexOfCall(instrs, index, leaveIndex, "System.Int32", "()");
+			int loopEnd = GetIndexOfCall(instrs, loopStart, leaveIndex, "System.Boolean", "()");
+			if (loopStart < 0 || loopEnd < 0)
+				return false;
+			loopStart++;
+			loopEnd--;
+
+			dynocode.Initialize(module);
+			var ctorArg = emu.Pop() as Int32Value;
+			if (ctorArg == null || !ctorArg.AllBitsValid())
+				return false;
+			dynocode.CreateEnumerable(ctor, new object[] { ctorArg.Value });
+			dynocode.WriteEnumerableField(enumerableField.MDToken.ToUInt32(), initValue.Value);
+			dynocode.CreateEnumerator();
+			foreach (var val in dynocode) {
+				emu.Push(new Int32Value(val));
+				for (int i = loopStart; i < loopEnd; i++)
+					emu.Emulate(instrs[i]);
+			}
+
+			index = newIndex - 1;
+			return true;
+		}
+
+		// 5.1+
+		// the only changes are the indexes of ldloc and stfld
+		bool EmulateDynocodeNew(InstructionEmulator emu, ref int index) {
+			var instrs = stringMethod.Body.Instructions;
+			var instr = instrs[index];
+
+			var ctor = instr.Operand as MethodDef;
+			if (ctor == null || ctor.MethodSig.GetParamCount() != 1 || ctor.MethodSig.Params[0].ElementType != ElementType.I4)
+				return false;
+
+			if (index + 4 >= instrs.Count)
+				return false;
+			var ldloc = instrs[index + 2];
+			var stfld = instrs[index + 3];
 			if (!ldloc.IsLdloc() || stfld.OpCode.Code != Code.Stfld)
 				return false;
 			var enumerableField = stfld.Operand as FieldDef;

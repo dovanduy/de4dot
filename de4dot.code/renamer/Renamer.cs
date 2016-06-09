@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright (C) 2011-2014 de4dot@gmail.com
+    Copyright (C) 2011-2015 de4dot@gmail.com
 
     This file is part of de4dot.
 
@@ -23,7 +23,7 @@ using System.Text.RegularExpressions;
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
 using de4dot.code.renamer.asmmodules;
-using de4dot.code.resources;
+using dnlib.DotNet.Resources;
 using de4dot.blocks;
 
 namespace de4dot.code.renamer {

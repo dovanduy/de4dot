@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright (C) 2011-2014 de4dot@gmail.com
+    Copyright (C) 2011-2015 de4dot@gmail.com
 
     This file is part of de4dot.
 
@@ -22,7 +22,7 @@ using dnlib.DotNet;
 using de4dot.blocks;
 
 namespace de4dot.code.deobfuscators {
-	class MethodCollection {
+	public class MethodCollection {
 		TypeDefDict<bool> types = new TypeDefDict<bool>();
 		MethodDefAndDeclaringTypeDict<bool> methods = new MethodDefAndDeclaringTypeDict<bool>();
 
