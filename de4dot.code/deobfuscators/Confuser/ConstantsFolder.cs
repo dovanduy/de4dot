@@ -1,4 +1,4 @@
-﻿/*
+/*
     Copyright (C) 2011-2015 de4dot@gmail.com
 
     This file is part of de4dot.
@@ -35,22 +35,19 @@ namespace de4dot.code.deobfuscators.Confuser {
 				var instr = instrs[i];
 				if (constantsReader.IsLoadConstantInt32(instr.Instruction)) {
 					index = i;
-					int val;
-					if (!constantsReader.GetInt32(ref index, out val))
+					if (!constantsReader.GetInt32(ref index, out int val))
 						continue;
 					newInstr = Instruction.CreateLdcI4(val);
 				}
 				else if (constantsReader.IsLoadConstantInt64(instr.Instruction)) {
 					index = i;
-					long val;
-					if (!constantsReader.GetInt64(ref index, out val))
+					if (!constantsReader.GetInt64(ref index, out long val))
 						continue;
 					newInstr = Instruction.Create(OpCodes.Ldc_I8, val);
 				}
 				else if (constantsReader.IsLoadConstantDouble(instr.Instruction)) {
 					index = i;
-					double val;
-					if (!constantsReader.GetDouble(ref index, out val))
+					if (!constantsReader.GetDouble(ref index, out double val))
 						continue;
 					newInstr = Instruction.Create(OpCodes.Ldc_R8, val);
 				}
@@ -67,10 +64,10 @@ namespace de4dot.code.deobfuscators.Confuser {
 				// Convert ldc.r4/r8 followed by conv to the appropriate ldc.i4/i8 instr
 				if (i + 1 < instrs.Count && (instr.OpCode.Code == Code.Ldc_R4 || instr.OpCode.Code == Code.Ldc_R8)) {
 					var conv = instrs[i + 1];
-					int vali32 = instr.OpCode.Code == Code.Ldc_R4 ? (int)(float)instr.Operand : (int)(double)instr.Operand;
+					/*int vali32 = instr.OpCode.Code == Code.Ldc_R4 ? (int)(float)instr.Operand : (int)(double)instr.Operand;
 					long vali64 = instr.OpCode.Code == Code.Ldc_R4 ? (long)(float)instr.Operand : (long)(double)instr.Operand;
 					uint valu32 = instr.OpCode.Code == Code.Ldc_R4 ? (uint)(float)instr.Operand : (uint)(double)instr.Operand;
-					ulong valu64 = instr.OpCode.Code == Code.Ldc_R4 ? (ulong)(float)instr.Operand : (ulong)(double)instr.Operand;
+					ulong valu64 = instr.OpCode.Code == Code.Ldc_R4 ? (ulong)(float)instr.Operand : (ulong)(double)instr.Operand;*/
 					switch (conv.OpCode.Code) {
 					case Code.Conv_I1:
 						newInstr = Instruction.CreateLdcI4(instr.OpCode.Code == Code.Ldc_R4 ? (sbyte)(float)instr.Operand : (sbyte)(double)instr.Operand);
@@ -112,8 +109,6 @@ namespace de4dot.code.deobfuscators.Confuser {
 			return modified;
 		}
 
-		static ConstantsReader CreateConstantsReader(IList<Instr> instrs) {
-			return new ConstantsReader(instrs, false);
-		}
+		static ConstantsReader CreateConstantsReader(IList<Instr> instrs) => new ConstantsReader(instrs, false);
 	}
 }
